@@ -1,17 +1,17 @@
 ---
 - name: Ensure the built-in driver is absent to start
-  win_inf_printer_driver:
+  ansible.windows.win_inf_printer_driver:
     driver_name: "{{ test_inf_printer_builtin_name }}"
     state: absent
 
 - name: Run the built-in driver lifecycle
   module_defaults:
-    win_inf_printer_driver:
+    ansible.windows.win_inf_printer_driver:
       driver_name: "{{ test_inf_printer_builtin_name }}"
       inf_file: "{{ test_inf_printer_builtin_inf }}"
   block:
     - name: Install the driver in check mode
-      win_inf_printer_driver:
+      ansible.windows.win_inf_printer_driver:
         state: present
       check_mode: true
       register: install_check
@@ -32,7 +32,7 @@
           - not state_after_install_check.result
 
     - name: Install the driver
-      win_inf_printer_driver:
+      ansible.windows.win_inf_printer_driver:
         state: present
       register: install
 
@@ -47,7 +47,7 @@
           - state_after_install.result
 
     - name: Install the driver again
-      win_inf_printer_driver:
+      ansible.windows.win_inf_printer_driver:
         state: present
       register: install_again
 
@@ -57,7 +57,7 @@
           - install_again is not changed
 
     - name: Remove the driver in check mode
-      win_inf_printer_driver:
+      ansible.windows.win_inf_printer_driver:
         state: absent
       check_mode: true
       register: remove_check
@@ -73,7 +73,7 @@
           - state_after_remove_check.result
 
     - name: Remove the driver
-      win_inf_printer_driver:
+      ansible.windows.win_inf_printer_driver:
         state: absent
       register: remove
 
@@ -88,7 +88,7 @@
           - not state_after_remove.result
 
     - name: Remove the driver again
-      win_inf_printer_driver:
+      ansible.windows.win_inf_printer_driver:
         state: absent
       register: remove_again
 
@@ -98,7 +98,7 @@
           - remove_again is not changed
 
     - name: Fail to install without inf_file
-      win_inf_printer_driver:
+      ansible.windows.win_inf_printer_driver:
         inf_file: null
         state: present
       register: no_inf
@@ -112,6 +112,6 @@
 
   always:
     - name: Clean up the built-in driver
-      win_inf_printer_driver:
+      ansible.windows.win_inf_printer_driver:
         driver_name: "{{ test_inf_printer_builtin_name }}"
         state: absent

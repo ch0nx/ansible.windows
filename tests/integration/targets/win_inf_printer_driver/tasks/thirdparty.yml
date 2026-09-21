@@ -12,20 +12,20 @@
       ansible.windows.win_shell: Expand-Archive -LiteralPath '{{ remote_tmp_dir }}\driver.zip' -DestinationPath '{{ _driver_dir }}' -Force
 
     - name: Ensure the drivers are absent to start
-      win_inf_printer_driver:
+      ansible.windows.win_inf_printer_driver:
         driver_name: "{{ item }}"
         state: absent
       loop: "{{ test_inf_printer_thirdparty_names }}"
 
     - name: Install both drivers from the shared INF
-      win_inf_printer_driver:
+      ansible.windows.win_inf_printer_driver:
         inf_file: '{{ _driver_dir }}\{{ test_inf_printer_thirdparty_inf }}'
         driver_name: "{{ item }}"
         state: present
       loop: "{{ test_inf_printer_thirdparty_names }}"
 
     - name: Fail to purge a shared-INF driver from the store without remove_all
-      win_inf_printer_driver:
+      ansible.windows.win_inf_printer_driver:
         driver_name: "{{ test_inf_printer_thirdparty_names[0] }}"
         remove_from_driver_store: true
         state: absent
@@ -49,7 +49,7 @@
           - present_after_guard.result == (test_inf_printer_thirdparty_names | length)
 
     - name: Remove every driver sharing the INF from the store
-      win_inf_printer_driver:
+      ansible.windows.win_inf_printer_driver:
         driver_name: "{{ test_inf_printer_thirdparty_names[0] }}"
         remove_from_driver_store: true
         remove_all: true
@@ -68,7 +68,7 @@
 
   always:
     - name: Clean up any remaining third-party drivers
-      win_inf_printer_driver:
+      ansible.windows.win_inf_printer_driver:
         driver_name: "{{ item }}"
         remove_from_driver_store: true
         remove_all: true
