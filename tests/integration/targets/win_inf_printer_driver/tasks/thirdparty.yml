@@ -30,7 +30,7 @@
         remove_from_driver_store: true
         state: absent
       register: shared_guard
-      ignore_errors: true
+      failed_when: "'Set remove_all=true to remove them all from the driver store' not in shared_guard.msg"
 
     - name: Get the count of drivers still present after the rejected removal
       ansible.windows.win_powershell: &count_present
@@ -41,11 +41,9 @@
           $Ansible.Result = @($Names | Where-Object { Get-PrinterDriver -Name $_ -ErrorAction SilentlyContinue }).Count
       register: present_after_guard
 
-    - name: Assert the shared-INF guard rejected the removal and removed nothing
+    - name: Assert the shared-INF guard removed nothing
       ansible.builtin.assert:
         that:
-          - shared_guard is failed
-          - "'is used by' in shared_guard.msg"
           - present_after_guard.result == (test_inf_printer_thirdparty_names | length)
 
     - name: Remove every driver sharing the INF from the store

@@ -4,6 +4,13 @@
     driver_name: "{{ test_inf_printer_builtin_name }}"
     state: absent
 
+- name: Fail to install without inf_file
+  ansible.windows.win_inf_printer_driver:
+    driver_name: "{{ test_inf_printer_builtin_name }}"
+    state: present
+  register: no_inf
+  failed_when: "no_inf.msg != 'state is present but all of the following are missing: inf_file'"
+
 - name: Run the built-in driver lifecycle
   module_defaults:
     ansible.windows.win_inf_printer_driver:
@@ -96,19 +103,6 @@
       ansible.builtin.assert:
         that:
           - remove_again is not changed
-
-    - name: Fail to install without inf_file
-      ansible.windows.win_inf_printer_driver:
-        inf_file: null
-        state: present
-      register: no_inf
-      ignore_errors: true
-
-    - name: Assert inf_file is required when state=present
-      ansible.builtin.assert:
-        that:
-          - no_inf is failed
-          - "'inf_file' in no_inf.msg"
 
   always:
     - name: Clean up the built-in driver

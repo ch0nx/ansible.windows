@@ -1,19 +1,10 @@
 ---
-# Whether to run the third-party driver tests. They download a driver package from the
-# ansible test fileserver (test_inf_printer_thirdparty_url); set this to false to run
-# only the built-in tests until that artifact is in place.
-test_inf_printer_thirdparty: true
+# Disabled until the third-party driver package is hosted on the ansible test fileserver.
+test_inf_printer_thirdparty: false
 
-# Tier 1 - a built-in driver present on every Windows image. It is installed from its
-# inbox INF and then unregistered, so nothing is left behind. Its driver-store package
-# is TrustedInstaller-protected and cannot be purged, so remove_from_driver_store is
-# exercised in the third-party tests instead.
 test_inf_printer_builtin_inf: C:\Windows\INF\prnge001.inf
 test_inf_printer_builtin_name: Generic / Text Only
 
-# Tier 2 - a third-party driver whose store package can be purged, declaring two models
-# that share one INF so remove_all can be exercised. Override the URL to validate
-# against a different mirror.
 test_inf_printer_thirdparty_url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/win_inf_printer_driver/HP-Color-LaserJet-Series-II.zip
 test_inf_printer_thirdparty_inf: prnhp001.inf
 test_inf_printer_thirdparty_names:
