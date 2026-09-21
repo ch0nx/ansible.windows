@@ -1,7 +1,4 @@
 ---
-# Disabled until the third-party driver package is hosted on the ansible test fileserver.
-test_inf_printer_thirdparty: false
-
 test_inf_printer_builtin_inf: C:\Windows\INF\prnge001.inf
 test_inf_printer_builtin_name: Generic / Text Only
 
