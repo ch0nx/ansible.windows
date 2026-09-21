@@ -1,0 +1,82 @@
+---
+- name: Run the third-party driver-store tests
+  vars:
+    _driver_dir: '{{ remote_tmp_dir }}\win_inf_printer_driver'
+  block:
+    - name: Download the third-party driver archive
+      ansible.windows.win_get_url:
+        url: "{{ test_inf_printer_thirdparty_url }}"
+        dest: '{{ remote_tmp_dir }}\driver.zip'
+
+    - name: Extract the third-party driver archive
+      ansible.windows.win_shell: Expand-Archive -LiteralPath '{{ remote_tmp_dir }}\driver.zip' -DestinationPath '{{ _driver_dir }}' -Force
+
+    - name: Ensure the drivers are absent to start
+      win_inf_printer_driver:
+        driver_name: "{{ item }}"
+        state: absent
+      loop: "{{ test_inf_printer_thirdparty_names }}"
+
+    - name: Install both drivers from the shared INF
+      win_inf_printer_driver:
+        inf_file: '{{ _driver_dir }}\{{ test_inf_printer_thirdparty_inf }}'
+        driver_name: "{{ item }}"
+        state: present
+      loop: "{{ test_inf_printer_thirdparty_names }}"
+
+    - name: Fail to purge a shared-INF driver from the store without remove_all
+      win_inf_printer_driver:
+        driver_name: "{{ test_inf_printer_thirdparty_names[0] }}"
+        remove_from_driver_store: true
+        state: absent
+      register: shared_guard
+      ignore_errors: true
+
+    - name: Get the count of drivers still present after the rejected removal
+      ansible.windows.win_powershell: &count_present
+        parameters:
+          Names: "{{ test_inf_printer_thirdparty_names }}"
+        script: |
+          param($Names)
+          $Ansible.Result = @($Names | Where-Object { Get-PrinterDriver -Name $_ -ErrorAction SilentlyContinue }).Count
+      register: present_after_guard
+
+    - name: Assert the shared-INF guard rejected the removal and removed nothing
+      ansible.builtin.assert:
+        that:
+          - shared_guard is failed
+          - "'is used by' in shared_guard.msg"
+          - present_after_guard.result == (test_inf_printer_thirdparty_names | length)
+
+    - name: Remove every driver sharing the INF from the store
+      win_inf_printer_driver:
+        driver_name: "{{ test_inf_printer_thirdparty_names[0] }}"
+        remove_from_driver_store: true
+        remove_all: true
+        state: absent
+      register: remove_all
+
+    - name: Get the count of drivers still present after remove_all
+      ansible.windows.win_powershell: *count_present
+      register: present_after_remove_all
+
+    - name: Assert remove_all purged every driver sharing the INF
+      ansible.builtin.assert:
+        that:
+          - remove_all is changed
+          - present_after_remove_all.result == 0
+
+  always:
+    - name: Clean up any remaining third-party drivers
+      win_inf_printer_driver:
+        driver_name: "{{ item }}"
+        remove_from_driver_store: true
+        remove_all: true
+        state: absent
+      loop: "{{ test_inf_printer_thirdparty_names }}"
+      ignore_errors: true
+
+    - name: Clean up the driver staging directory
+      ansible.windows.win_file:
+        path: "{{ _driver_dir }}"
+        state: absent
